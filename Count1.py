@@ -149,6 +149,8 @@ for i in range(len(frames)):
                         'laneType': temp_eventList[j]['laneType'],
                         'position': temp_eventList[j]['position'],
                         'buildingType': temp_eventList[j]['buildingType'],
+                        'placeIndex': getArea(temp_eventList[j]['position']['x'] / 15000,
+                                              temp_eventList[j]['position']['y'] / 15000),
                         'killType': 'BUILDING_KILL'}
                 # print(elem)
                 CHAMPION_KILL_INFO.append(elem)
@@ -158,6 +160,8 @@ for i in range(len(frames)):
                         'laneType': temp_eventList[j]['laneType'],
                         'position': temp_eventList[j]['position'],
                         'buildingType': temp_eventList[j]['buildingType'],
+                        'placeIndex': getArea(temp_eventList[j]['position']['x'] / 15000,
+                                              temp_eventList[j]['position']['y'] / 15000),
                         'killType': 'BUILDING_KILL'}
                 # print(elem)
                 CHAMPION_KILL_INFO.append(elem)

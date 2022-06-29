@@ -61,10 +61,12 @@ for items in deathInfo:
                     currentTimeline[i]["Start"] = newStart
 
                     # print(victimID)
-                    # if victimID <= 5:
-                    #     currentTimeline[i]["Session"] = 1
-                    # else:
-                    #     currentTimeline[i]["Session"] = 17
+                    if victimID <= 5:
+                        currentTimeline[i]["Session"] = 1
+                        currentTimeline[i+1]["Session"] = 1
+                    else:
+                        currentTimeline[i]["Session"] = 17
+                        currentTimeline[i+1]["Session"] = 17
                     # print(currentPlayer, currentTimeline[i])
                     break
 

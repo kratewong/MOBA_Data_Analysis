@@ -85,16 +85,16 @@ def getArea(x, y):
     return areaToSession[area]
 
 
-f = open('Match6/player1.json')
-f2 = open('Match6/player2.json')
-f3 = open('Match6/player3.json')
-f4 = open('Match6/player4.json')
-f5 = open('Match6/player5.json')
-f6 = open('Match6/player6.json')
-f7 = open('Match6/player7.json')
-f8 = open('Match6/player8.json')
-f9 = open('Match6/player9.json')
-f10 = open('Match6/player10.json')
+f = open('TestOne/player1.json')
+f2 = open('TestOne/player2.json')
+f3 = open('TestOne/player3.json')
+f4 = open('TestOne/player4.json')
+f5 = open('TestOne/player5.json')
+f6 = open('TestOne/player6.json')
+f7 = open('TestOne/player7.json')
+f8 = open('TestOne/player8.json')
+f9 = open('TestOne/player9.json')
+f10 = open('TestOne/player10.json')
 
 fileOpenList = [f, f2, f3, f4, f5, f6, f7, f8, f9, f10]
 
