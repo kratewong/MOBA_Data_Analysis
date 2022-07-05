@@ -2,9 +2,30 @@ import json
 import copy
 from PIL import Image
 
-areaImage = Image.open('LoLBaseMap1.png')
+import pprint
 
-colorToArea = {(0, 51, 153): 'BlueBase',
+usePlateau = True
+useSimple = True
+
+death_offset = 2500
+respawn_offset = 1000
+
+# mapping  of colors to areas 
+colorToArea = None
+areaImage = None
+
+if useSimple:
+    areaImage = Image.open('LoLBaseMap2.png')
+    colorToArea = {(0, 51, 153): 'BlueBase',
+               (153, 255, 255): 'BottomLane',
+               (255, 255, 255): 'MidLane',
+               (102, 102, 255): 'Jungle',
+               (0, 255, 0): 'TopLane',
+               (255, 153, 204): 'PurpleBase',
+               }
+else:
+    areaImage = Image.open('LoLBaseMap1.png')
+    colorToArea = {(0, 51, 153): 'BlueBase',
                (204, 204, 255): 'BlueTopLane',
                (102, 102, 255): 'TopBlueJungle',
                (255, 255, 255): 'BlueMiddleLane',
@@ -23,43 +44,41 @@ colorToArea = {(0, 51, 153): 'BlueBase',
                (255, 153, 204): 'PurpleBase',
                }
 
+# returns the name of the area at position (x,y)
 # x, y are between 0...1
 def getAreaName(x, y):
     width, height = areaImage.size
     x = (int)(x * width)
     y = (int)(height - y * height)
-    r, g, b, a = areaImage.getpixel((x, y))
+    if useSimple:
+        r, g, b = areaImage.getpixel((x, y))
+    else:
+        r, g, b, a = areaImage.getpixel((x, y))    
 
     area = colorToArea[(r, g, b)]
 
     return area
 
-
-def getArea(x, y):
-    width, height = areaImage.size
-    x = (int)(x * width)
-    y = (int)(height - y * height)
-    r, g, b, a = areaImage.getpixel((x, y))
-
-    area = colorToArea[(r, g, b)]
-    return areaToSession[area]
-    
-
-event_types = set()
-champion_kill_event_position = []
-building_kill_event_position = []
-elite_monster_kill_event_position = []
-
+# delete events whose timestamp is between time1 and time2
+def deleteEventsInTimeSpan(events, time1, time2):
+    indicesToDelete = []
+    for i in range(len(events)): 
+        if events[i]['timestamp'] > time1 and events[i]['timestamp'] < time2:
+            indicesToDelete.append(i)
+            
+    for i in indicesToDelete:
+        del events[i]
+               
+# load the replay file
 f = open('EUW1_5922388644.json')
 data = json.load(f)
 
+# extract the frames (representing ~1min intervalls)
 info = data['info']
 frames = data["info"]["frames"]
 
 
-# Timestamp value does not match with the player's position
-# We only have around 1000 positions
-
+# adds position and timestamp information to the current player
 def add_Info():
     PlayerPosTime.append(eventsWithPos[i]['position'])
     PlayerTime.append(eventsWithPos[i]['timestamp'])
@@ -67,13 +86,15 @@ def add_Info():
 
 currentPlayerID = 0
 
+# loop through the 10 players
 for p in range(1,11):
     currentPlayerID = p
     
-    events = []
-    timelineInfo = []  # This list will include objects with x position, y position, timestamp
+    events = []         # list of events
+    timelineInfo = []   # This list will include objects with x position, y position, timestamp
     
-    # Get Player's position and timestamps based on 100s' interval
+    # TRAJECTORY
+    # Get Player's position and timestamps from the frames 
     for i in range(len(frames)):
         timelineInfo.append(frames[i]["participantFrames"][str(currentPlayerID)]["position"])
         timelineInfo[i]['timestamp'] = frames[i]["timestamp"]
@@ -83,62 +104,81 @@ for p in range(1,11):
 
     eventsWithPos = []
 
-    # Looping through events, Find position, timestamp and its relevant event
+    # EVENTS
+    # Looping through events, find position, timestamp etc.
+    for i in range(len(events)):
+        for j in range(len(events[i])):
+            if events[i][j]['type'] == "BUILDING_KILL" and events[i][j]['killerId'] == currentPlayerID:
+                eventsWithPos.append(events[i][j])
+            elif events[i][j]['type'] == "ELITE_MONSTER_KILL" and events[i][j]['killerId'] == currentPlayerID:  
+                eventsWithPos.append(events[i][j])
+            elif events[i][j]['type'] == "TURRET_PLATE_DESTROYED" and events[i][j]['killerId'] == currentPlayerID:  
+                eventsWithPos.append(events[i][j])
+
+            # CHAMPION_SPECIAL_KILL                                 ignored because of being only extra information about CHAMPION_KILL
+            # ITEM_SOLD, ITEM_PURCHASED, ITEM_UNDO, ITEM_DESTROYED  ignored because of no position
+            # PAUSE_END, GAME_END                                   ignored because of no position
+            # SKILL_LEVEL_UP, LEVEL_UP                              ignored because of no position
+            # WARD_PLACED, WARD_KILL                                ignored because of no position
+                        
+    PlayerPosTime = []                  # list of coordinates
+    PlayerTime = []                     # list of timestamps
+
     for i in range(len(events)):
         for j in range(len(events[i])):
             if events[i][j]['type'] == "CHAMPION_KILL" and events[i][j]['victimId'] == currentPlayerID:
-                time = events[i][j]['timestamp']
-                time1 = time - 250
-                time2 = time + 250
-                copy1 = copy.copy(events[i][j])
-                copy2 = copy.copy(events[i][j])
-                copy1['timestamp'] = time1
-                copy2['timestamp'] = time2
-                eventsWithPos.append(copy1)
-                eventsWithPos.append(copy2)
-                #print(time1)
-                #print(time2)
-                
-                victimID = events[i][j]['victimId']
-                x = events[i][j]['position']['x']
-                y = events[i][j]['position']['y']
-                area = getAreaName(x / 15000, y / 15000)
-                
-                print("playerID = " + str(victimID) + " area = " + area + " time = " + str(time1) + "- D")
-                print("playerID = " + str(victimID) + " area = " + area + " time = " + str(time) + "< D")
-                print("playerID = " + str(victimID) + " area = " + area + " time = " + str(time2) + "+ D")
-                
-            else:
-                try:
-                    if events[i][j]['position'] and events[i][j]['participantId'] == currentPlayerID:
-                        eventsWithPos.append(events[i][j])
-                except KeyError:
-                    continue
+                if not usePlateau:
+                    PlayerPosTime.append({'x': events[i][j]['position']['x'], 'y': events[i][j]['position']['y']})
+                    PlayerTime.append(time1)
+                    print("playerID = " + str(currentPlayerID) + " time = " + str(events[i][j]['timestamp']))
+                else:   
+                    time = events[i][j]['timestamp']
+                    time1 = time - death_offset
+                    time2 = time + death_offset
+                    copy1 = copy.copy(events[i][j])
+                    copy2 = copy.copy(events[i][j])
+                    copy1['timestamp'] = time1
+                    copy2['timestamp'] = time2
 
-    PlayerPosTime = []
-    PlayerTime = []
-    
+                    # delete events within the plateau
+                    deleteEventsInTimeSpan(eventsWithPos, time1, time2)     # eventWithPos does not include CHAMPION_KILL events
+                    deleteEventsInTimeSpan(timelineInfo, time1, time2)      # timelineInfo at this point only contains trajectory
+
+                    # add plateau
+                    PlayerPosTime.append({'x': events[i][j]['position']['x'], 'y': events[i][j]['position']['y']})
+                    PlayerTime.append(time1)
+
+                    PlayerPosTime.append({'x': events[i][j]['position']['x'], 'y': events[i][j]['position']['y']})
+                    PlayerTime.append(time2)
+                                
+                    # go back to base
+                    if currentPlayerID <= 5:
+                        PlayerPosTime.append({'x': 5, 'y': 5})            # blue team
+                    else:
+                        PlayerPosTime.append({'x': 14900, 'y': 14900})    # red team
+                        
+                    newtime = time2 + respawn_offset
+                    PlayerTime.append(newtime)
+                    
+                    # debug output
+                    victimID = events[i][j]['victimId']
+                    x = events[i][j]['position']['x']
+                    y = events[i][j]['position']['y']
+                    area = getAreaName(x / 15000, y / 15000)
+
+                    print("playerID = " + str(victimID) + " area = " + area + " time = " + str(time1) + "- D")
+                    print("playerID = " + str(victimID) + " area = " + area + " time = " + str(time) + "< D")
+                    print("playerID = " + str(victimID) + " area = " + area + " time = " + str(time2) + "+ D")
+
     # Find out the timestamp and position info when any events happened to the player
     for i in range(len(eventsWithPos)):
         try:
-            if eventsWithPos[i]['killerId'] == currentPlayerID:
+            # BUILDING_KILL, ELITE_MONSTER_KILL, TURRET_PLATE_DESTROYED events
+            if eventsWithPos[i]['killerId'] == currentPlayerID:         
                 add_Info()
                 continue
 
-            # go back to base after being killed
-            if eventsWithPos[i]['victimId'] == currentPlayerID:
-                if currentPlayerID <= 5:
-                    PlayerPosTime.append({'x': 5, 'y': 5})            # blue team
-                    area = getAreaName(50 / 15000, 50 / 15000)
-                else:
-                    PlayerPosTime.append({'x': 14900, 'y': 14900})    # red team
-                    area = getAreaName(14900 / 15000, 14900 / 15000)
-                    
-                newtime = eventsWithPos[i]['timestamp'] + 500
-                PlayerTime.append(newtime)
-                print("playerID = " + str(currentPlayerID) + " area = " + area + " time = " + str(newtime) + " > base")
-                continue
-
+            # CHAMPION_KILL events are handled directly above
         except KeyError:
             pass
 
@@ -146,15 +186,16 @@ for p in range(1,11):
     for i in range(len(PlayerPosTime)):
         PlayerPosTime[i]['timestamp'] = PlayerTime[i]
 
-    # Insert Player10's position and time into timelineInfo
+    # Insert the players position and time into timelineInfo
     for i in range(len(PlayerPosTime)):
         timelineInfo.append(PlayerPosTime[i])
 
     # Ordering it based on the timestamp
     timelineInfo.sort(key=lambda x: x['timestamp'])
 
-    #print(timelineInfo)
+    print(timelineInfo)
 
+    # export of player data to JSON file
     jsonString = json.dumps(timelineInfo)
     jsonFile = open("TestOne/Player" + str(currentPlayerID) + ".json", "w")
     jsonFile.write(jsonString)
