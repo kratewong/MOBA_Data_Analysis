@@ -57,7 +57,7 @@ if useSimple:
         'MidLane': 3,
         'Jungle': 4,
         'TopLane': 5,
-        'PurpleBase': 6,
+        'PurpleBase': 6
     }
 else:
     areaImage = Image.open('LoLBaseMap1.png')
@@ -230,6 +230,6 @@ for i in range(len(playerList)):
 
 
     jsonString = json.dumps(LOLTimeline, indent=2)
-    jsonFile = open("TestOne/testResult.json", "w")
+    jsonFile = open("newTest/newLocationSimple.json", "w")
     jsonFile.write(jsonString)
     jsonFile.close()

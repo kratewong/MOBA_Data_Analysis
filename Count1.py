@@ -2,58 +2,100 @@ import json
 
 from PIL import Image
 
-areaImage = Image.open('LoLBaseMap1.png')
+useSimple = True
 
-colorToArea = {(0, 51, 153): 'BlueBase',
-               (204, 204, 255): 'BlueTopLane',
-               (102, 102, 255): 'TopBlueJungle',
-               (255, 255, 255): 'BlueMiddleLane',
-               (51, 102, 153): 'BottomRedJungle',
-               (153, 255, 255): 'BlueBottomLane',
-               (0, 0, 255): 'ContestedTop',
-               (102, 153, 255): 'TopRiver',
-               (128, 128, 128): 'ContestedMiddle',
-               (0, 255, 255): 'BottomRiver',
-               (51, 153, 102): 'ContestedBottom',
-               (0, 255, 0): 'PurpleTopLane',
-               (153, 153, 255): 'TopRedJungle',
-               (220, 121, 0): 'PurpleMiddleLane',
-               (255, 255, 0): 'BottomBlueJungle',
-               (153, 0, 204): 'PurpleBottomLane',
-               (255, 153, 204): 'PurpleBase',
-               }
+areaImage = None
+colorToArea = None
+areaToSession = None
 
-areaToSession = {
-    'BlueBase': 1,
-    'BlueTopLane': 2,
-    'TopBlueJungle': 3,
-    'BlueMiddleLane': 4,
-    'BottomRedJungle': 5,
-    'BlueBottomLane': 6,
-    'ContestedTop': 7,
-    'TopRiver': 8,
-    'ContestedMiddle': 9,
-    'BottomRiver': 10,
-    'ContestedBottom': 11,
-    'PurpleTopLane': 12,
-    'TopRedJungle': 13,
-    'PurpleMiddleLane': 14,
-    'BottomBlueJungle': 15,
-    'PurpleBottomLane': 16,
-    'PurpleBase': 17
-}
+if useSimple:
+    print("SIMPLE MODE")
+    areaImage = Image.open('LoLBaseMap2.png')
+
+    colorToArea = {(0, 51, 153): 'BlueBase',
+                   (153, 255, 255): 'BottomLane',
+                   (255, 255, 255): 'MidLane',
+                   (102, 102, 255): 'Jungle',
+                   (102, 103, 255): 'Jungle',
+                   (0, 255, 0): 'TopLane',
+                   (255, 153, 204): 'PurpleBase',
+                   }
+
+    areaToSession = {
+        'BlueBase': 1,
+        'BottomLane': 2,
+        'MidLane': 3,
+        'Jungle': 4,
+        'TopLane': 5,
+        'PurpleBase': 6
+    }
+else:
+    print("Complex Mode")
+    areaImage = Image.open('LoLBaseMap1.png')
+
+    colorToArea = {(0, 51, 153): 'BlueBase',
+                   (204, 204, 255): 'BlueTopLane',
+                   (102, 102, 255): 'TopBlueJungle',
+                   (255, 255, 255): 'BlueMiddleLane',
+                   (51, 102, 153): 'BottomRedJungle',
+                   (153, 255, 255): 'BlueBottomLane',
+                   (0, 0, 255): 'ContestedTop',
+                   (102, 153, 255): 'TopRiver',
+                   (128, 128, 128): 'ContestedMiddle',
+                   (0, 255, 255): 'BottomRiver',
+                   (51, 153, 102): 'ContestedBottom',
+                   (0, 255, 0): 'PurpleTopLane',
+                   (153, 153, 255): 'TopRedJungle',
+                   (220, 121, 0): 'PurpleMiddleLane',
+                   (255, 255, 0): 'BottomBlueJungle',
+                   (153, 0, 204): 'PurpleBottomLane',
+                   (255, 153, 204): 'PurpleBase',
+                   }
+
+    areaToSession = {
+        'BlueBase': 1,
+        'BlueTopLane': 2,
+        'TopBlueJungle': 3,
+        'BlueMiddleLane': 4,
+        'BottomRedJungle': 5,
+        'BlueBottomLane': 6,
+        'ContestedTop': 7,
+        'TopRiver': 8,
+        'ContestedMiddle': 9,
+        'BottomRiver': 10,
+        'ContestedBottom': 11,
+        'PurpleTopLane': 12,
+        'TopRedJungle': 13,
+        'PurpleMiddleLane': 14,
+        'BottomBlueJungle': 15,
+        'PurpleBottomLane': 16,
+        'PurpleBase': 17
+    }
 
 # x, y are between 0...1
 def getArea(x, y):
     width, height = areaImage.size
     x = (int)(x * width)
-    # print(700 - y * height)
-    y = (int)(1 - y * height)
-    r, g, b, a = areaImage.getpixel((x, y))
-    # print(x, y)
+    y = (int)(height - y * height)
+    if useSimple:
+        r, g, b  = areaImage.getpixel((x, y))
+    else:
+        r, g, b, a = areaImage.getpixel((x, y))
+
 
     area = colorToArea[(r, g, b)]
     return areaToSession[area]
+
+# def getArea(x, y):
+#     width, height = areaImage.size
+#     x = (int)(x * width)
+#     # print(700 - y * height)
+#     y = (int)(1 - y * height)
+#     r, g, b, a = areaImage.getpixel((x, y))
+#     # print(x, y)
+#
+#     area = colorToArea[(r, g, b)]
+#     return areaToSession[area]
 
 f = open('EUW1_5922388644Info.json')
 
@@ -85,7 +127,7 @@ def addInfo():
                         'victimID': temp_eventList[j]['victimId'],
                         'victimName': findName(temp_eventList[j]['victimId']),
                         'position': temp_eventList[j]['position'],
-                        'placeIndex': getArea(temp_eventList[j]['position']['x']/15000, temp_eventList[j]['position']['y']/15000),
+                        # 'placeIndex': getArea(temp_eventList[j]['position']['x']/15000, temp_eventList[j]['position']['y']/15000),
                         'killType': temp_eventList[j]['type']}
                 # print(elem)
                 CHAMPION_KILL_INFO.append(elem)
@@ -96,7 +138,7 @@ def addInfo():
                         'killerID': temp_eventList[j]['killerId'],
                         'killerName': x['championName'],
                         'position': temp_eventList[j]['position'],
-                        'placeIndex': getArea(temp_eventList[j]['position']['x']/15000, temp_eventList[j]['position']['y']/15000),
+                        # 'placeIndex': getArea(temp_eventList[j]['position']['x']/15000, temp_eventList[j]['position']['y']/15000),
                         'killType': temp_eventList[j]['type']}
                 # print(elem)
                 CHAMPION_KILL_INFO.append(elem)
@@ -149,8 +191,8 @@ for i in range(len(frames)):
                         'laneType': temp_eventList[j]['laneType'],
                         'position': temp_eventList[j]['position'],
                         'buildingType': temp_eventList[j]['buildingType'],
-                        'placeIndex': getArea(temp_eventList[j]['position']['x'] / 15000,
-                                              temp_eventList[j]['position']['y'] / 15000),
+                        # 'placeIndex': getArea(temp_eventList[j]['position']['x'] / 15000,
+                        #                       temp_eventList[j]['position']['y'] / 15000),
                         'killType': 'BUILDING_KILL'}
                 # print(elem)
                 CHAMPION_KILL_INFO.append(elem)
@@ -160,8 +202,8 @@ for i in range(len(frames)):
                         'laneType': temp_eventList[j]['laneType'],
                         'position': temp_eventList[j]['position'],
                         'buildingType': temp_eventList[j]['buildingType'],
-                        'placeIndex': getArea(temp_eventList[j]['position']['x'] / 15000,
-                                              temp_eventList[j]['position']['y'] / 15000),
+                        # 'placeIndex': getArea(temp_eventList[j]['position']['x'] / 15000,
+                        #                       temp_eventList[j]['position']['y'] / 15000),
                         'killType': 'BUILDING_KILL'}
                 # print(elem)
                 CHAMPION_KILL_INFO.append(elem)
@@ -194,7 +236,7 @@ print("BUILDING_KILL: " + str(BUILDING_KILL))
 CHAMPION_KILL_INFO.sort(key=lambda x: x["timestamp"])
 
 jsonString = json.dumps(CHAMPION_KILL_INFO, indent=4)
-jsonFile = open("TestOne/KillingInfoMatchOne.json", "w")
+jsonFile = open("newTest/newKillingInfo.json", "w")
 jsonFile.write(jsonString)
 jsonFile.close()
 

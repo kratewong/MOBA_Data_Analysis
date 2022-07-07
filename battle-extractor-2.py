@@ -35,10 +35,8 @@ data = json.load(f)
 frames = data["info"]["frames"]
 
 df = pd.DataFrame(columns=['time','x','y'])
-
 original_times = []
-
-factor = 100 
+factor = 1000
 
 events = []   
 for i in range(len(frames)):
@@ -68,13 +66,15 @@ for i in range(len(events)):
 df['x'] = df['x'].mul(factor)                  # scale up x and y coord to 
 df['y'] = df['y'].mul(factor)
 
+print(df['x'])
+
 #   eps1 = maximum spatial distance
 #   eps2 = maximum temporal distance
 #   min_samples  = number of samples required 
 data = df.loc[:, ['x','y','time']].values
 
-st_dbscan = ST_DBSCAN(eps1 = 15, eps2 = 150, min_samples = 3)
-st_dbscan.fit(data) 
+st_dbscan = ST_DBSCAN(eps1 = 100, eps2 = 100, min_samples = 3)
+st_dbscan.fit(data)
 
 #plot(data[:,1:], st_dbscan.labels) 
 print("CLUSTER LABELS")
@@ -111,7 +111,7 @@ for index, row in df.iterrows():
     
     color = (0,0,0)
     if st_dbscan.labels[i] >= 0:
-        print(st_dbscan.labels[i])
+        print(str(st_dbscan.labels[i]) + "  " + str(row['time']*max_time))
 
         obj = {'label': int(st_dbscan.labels[i]), 'timestamp': original_times[i]}
 
@@ -127,6 +127,8 @@ for index, row in df.iterrows():
     image = cv2.circle(image, P, radius=7, color=color, thickness=-1)
     image = cv2.circle(image, P, radius=4, color=(255*row['time'], 255*row['time'], 255*row['time']), thickness=-1)
     i+=1
+
+# print(json)
 
 jsonString = json.dumps(result, indent=2)
 jsonFile = open("dbscan.json", "w")
