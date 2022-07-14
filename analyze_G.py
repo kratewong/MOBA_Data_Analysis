@@ -5,7 +5,8 @@ from PIL import Image
 import pprint
 
 usePlateau = True
-useSimple = True
+# useMode 0 - simple, 1 - Simple(7), 2 - Complex
+useMode = 1
 
 death_offset = 2500
 respawn_offset = 1000
@@ -14,7 +15,7 @@ respawn_offset = 1000
 colorToArea = None
 areaImage = None
 
-if useSimple:
+if useMode == 0:
     areaImage = Image.open('LoLBaseMap2.png')
     colorToArea = {(0, 51, 153): 'BlueBase',
                (153, 255, 255): 'BottomLane',
@@ -23,6 +24,16 @@ if useSimple:
                (0, 255, 0): 'TopLane',
                (255, 153, 204): 'PurpleBase',
                }
+elif useMode == 1:
+    areaImage = Image.open('LoLBaseMap3.png')
+    colorToArea = {(0, 51, 153): 'BlueBase',
+                   (153, 255, 255): 'BottomLane',
+                   (255, 255, 255): 'MidLane',
+                   (71, 121, 234): 'TopJungle',
+                   (102, 102, 255): 'BottomJungle',
+                   (0, 255, 0): 'TopLane',
+                   (255, 153, 204): 'PurpleBase',
+                   }
 else:
     areaImage = Image.open('LoLBaseMap1.png')
     colorToArea = {(0, 51, 153): 'BlueBase',
@@ -44,13 +55,14 @@ else:
                (255, 153, 204): 'PurpleBase',
                }
 
+
 # returns the name of the area at position (x,y)
 # x, y are between 0...1
 def getAreaName(x, y):
     width, height = areaImage.size
     x = (int)(x * width)
     y = (int)(height - y * height)
-    if useSimple:
+    if useMode == 0 or useMode == 1:
         r, g, b = areaImage.getpixel((x, y))
     else:
         r, g, b, a = areaImage.getpixel((x, y))    

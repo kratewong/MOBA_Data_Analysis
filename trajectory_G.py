@@ -2,7 +2,10 @@ import json
 import cv2
 from PIL import Image
 
-useSimple = True
+# useSimple = True
+
+# useMode 0 - simple, 1 - Simple(7), 2 - Complex
+useMode = 1
 
 colorToArea = None
 LOLTimeline = None
@@ -12,7 +15,7 @@ areaImage = None
 image = None
 
 
-if useSimple:
+if useMode == 0:
     areaImage = Image.open('LoLBaseMap2.png')
     image = cv2.imread('LoLBaseMap2.png')
     colorToArea = {(0, 51, 153): 'BlueBase',
@@ -58,6 +61,55 @@ if useSimple:
         'Jungle': 4,
         'TopLane': 5,
         'PurpleBase': 6
+    }
+elif useMode == 1:
+    areaImage = Image.open('LoLBaseMap3.png')
+    image = cv2.imread('LoLBaseMap3.png')
+    colorToArea = {(0, 51, 153): 'BlueBase',
+                   (153, 255, 255): 'BottomLane',
+                   (255, 255, 255): 'MidLane',
+                   (71, 121, 234): 'TopJungle',
+                   (102, 102, 255): 'BottomJungle',
+                   (0, 255, 0): 'TopLane',
+                   (255, 153, 204): 'PurpleBase',
+                   }
+
+    # Generating json for feeding
+
+    LOLTimeline = {
+        "Story": {
+            "Locations": {
+                "BlueBase": [1],
+                "BottomLane": [2],
+                "BottomJungle": [3],
+                "MidLane": [4],
+                "TopJungle": [5],
+                "TopLane": [6],
+                "PurpleBase": [7]
+            },
+            "Characters": {
+                "Player1": [],
+                "Player2": [],
+                "Player3": [],
+                "Player4": [],
+                "Player5": [],
+                "Player6": [],
+                "Player7": [],
+                "Player8": [],
+                "Player9": [],
+                "Player10": []
+            }
+        }
+    }
+
+    areaToSession = {
+        'BlueBase': 1,
+        'BottomLane': 2,
+        'BottomJungle': 3,
+        'MidLane': 4,
+        'TopJungle': 5,
+        'TopLane': 6,
+        'PurpleBase': 7
     }
 else:
     areaImage = Image.open('LoLBaseMap1.png')
@@ -149,7 +201,7 @@ def getAreaName(x, y):
     width, height = areaImage.size
     x = (int)(x * width)
     y = (int)(height - y * height)
-    if useSimple:
+    if useMode == 0 or useMode == 1:
         r, g, b  = areaImage.getpixel((x, y))
     else:
         r, g, b, a = areaImage.getpixel((x, y))
@@ -163,13 +215,14 @@ def getArea(x, y):
     width, height = areaImage.size
     x = (int)(x * width)
     y = (int)(height - y * height)
-    if useSimple:
+    if useMode == 0 or useMode == 1:
         r, g, b  = areaImage.getpixel((x, y))
     else:
         r, g, b, a = areaImage.getpixel((x, y))
 
 
     area = colorToArea[(r, g, b)]
+    print(area)
     return areaToSession[area]
 
 
